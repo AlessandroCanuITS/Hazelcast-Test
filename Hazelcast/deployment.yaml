@@ -38,3 +38,33 @@ spec:
         image: nginx:1.14.2
         ports:
         - containerPort: 80
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pod-hazelcast-management-center
+spec:
+  selector:
+    matchLabels:
+      app: pod-hazelcast-management-center
+  template:
+    metadata:
+      labels:
+        app: pod-hazelcast-management-center
+    spec:
+      containers:
+        - image: hazelcast/management-center:latest
+          # Always from local, never from Dockerhub
+          imagePullPolicy: Always
+          # Url to check every 10 seconds if the container is ok
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+          name: container-hazelcast-management-center
+          # Url to check the container is up
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8081
+            initialDelaySeconds: 30
