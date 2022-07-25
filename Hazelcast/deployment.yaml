@@ -69,13 +69,6 @@ spec:
               port: 8081
             initialDelaySeconds: 30
 ---
-# =========================================================
-# 4th action == HTTP to Hazelcast Management Center
-# =========================================================
-# Note the name 'service-hazelcast-management-center' is
-# hardcoded in Hazelcast Server when it tries to find the
-# Management Center. If you change one, change the other.
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -88,4 +81,17 @@ spec:
   selector:
     app: pod-hazelcast-management-center
   type: NodePort
-
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: service-hazelcast-server
+spec:
+  # Headless service, only cluster members
+  clusterIP: None
+  selector:
+    app: pod-hazelcast-server
+  ports:
+  - protocol: TCP
+    port: 5701
+    targetPort: 5701
