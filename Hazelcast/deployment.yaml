@@ -68,10 +68,3 @@ spec:
               path: /health
               port: 8081
             initialDelaySeconds: 30
-      externalConnectivity:
-        type: LoadBalancer
-      hazelcastClusters:
-        - address: hazel
-      persistence:
-        enabled: true
-        size: 10Gi
