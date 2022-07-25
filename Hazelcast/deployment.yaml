@@ -56,3 +56,4 @@ spec:
         - image: hazelcast/management-center:latest
           # Always from local, never from Dockerhub
           imagePullPolicy: Always
+          name: container-hazelcast-management-center
