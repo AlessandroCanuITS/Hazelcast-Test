@@ -68,16 +68,10 @@ spec:
               path: /health
               port: 8081
             initialDelaySeconds: 30
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: service-hazelcast-management-center
-spec:
-  ports:
-    - protocol: TCP
-      port: 8080
-      targetPort: 8080
-  selector:
-    app: pod-hazelcast-management-center
-  type: NodePort
+        externalConnectivity:
+          type: LoadBalancer
+        hazelcastClusters:
+          - address: hazel
+        persistence:
+          enabled: true
+          size: 10Gi
