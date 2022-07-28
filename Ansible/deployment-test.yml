@@ -1,0 +1,96 @@
+---
+- hosts: localhost
+  gather_facts: false
+  connection: local
+
+  #Referencing kubernetes modules. Will additional Openshift modules be needed in provisioning on a real automation test?
+  collections:
+    - kubernetes.core
+
+  #Reference to Ansible-Vault secret to work witha a laptop password. Yet to find a suitable way to let ansible become root and bypass this check while working with wsl
+  vars_files:
+    - secret
+
+  #Basic provisioning of an app with check for namespace and service plus loadbalancer
+  tasks:
+    - name: Ensure the myapp Namespace exists.
+      k8s:
+        api_version: v1
+        kind: Namespace
+        name: myapp
+        state: present
+    - name:
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apeVersion: v1
+          kind: Service
+          metadata:
+            name: myapp
+            namespace: myapp
+          spec:
+            type: LoadBalancer
+            ports:
+            - port: 8080
+              targetPort: 8080
+            selector:
+              app: myapp
+
+# Basic usage of k8s module to create resources from yml file
+#    - name: Create Hazelcast Platform by reading the definition from a file yml
+#      kubernetes.core.k8s:
+#        state: present
+#        src: /mnt/c/Users/Alessandro/Desktop/Intesa/Hazelcast Testing/bundle-5.2.yaml
+
+#    - name: Create Custom Resource by reading the definition from a yml file
+#      kubernetes.core.k8s:
+#        state: present
+#        src: /mnt/c/Users/Alessandro/Desktop/Intesa/Hazelcast Testing/hazelcast.yml
+
+    #Create the app with a direct argo command, needs argocd cli installed to host
+    - name: Create app with argo command
+      command: argocd app create hazelcast-app --repo https://github.com/AlessandroCanuITS/Hazelcast-Test.git --path Hazelcast --dest-namespace argocd --dest-server https://kubernetes.default.svc
+
+    - name: Verify if repo already cloned
+      stat:
+        #        state: directory
+        path: /tmph/test/Hazelcast
+      register: cloned
+
+    #Clone target repo with check to verify it is up to date
+    - name: Clone repo
+      git:
+        repo: https://github.com/AlessandroCanuITS/Hazelcast-Test.git
+        dest: /tmph/test/
+        clone: yes
+        update: yes
+        force: yes
+      become: yes
+      when: cloned.stat.exists != true
+
+    #Telling git that the repo is a trusted one to work with
+    - name: safeguarding repo
+      shell: git config --global --add safe.directory /tmph/test
+      when: cloned.stat.exists
+
+    #register content of the value file
+    - name: get values from file
+      shell: cat /tmph/test/Hazelcast/deployment.yaml
+      register: values_file
+
+    #Add a service in the cluster writing codelines in the value file with a check to verify app isn't already there. These task here insert a basic nginx app
+    - name: add-services.yml add service and cluster to values.yaml
+      lineinfile:
+        path: "/tmph/test/Hazelcast/deployment.yaml"
+        state: present
+        line: "---\napiVersion: apps/v1\nkind: Deployment\nmetadata:\n  name: nginx-deployment\nspec:\n  selector:\n    matchLabels:\n      app: nginx\n  replicas: 2\n  template:\n    metadata:\n      labels:\n        app: nginx\n    spec:\n      containers:\n      - name: nginx\n        image: nginx:1.14.2\n        ports:\n        - containerPort: 80\n"
+      become: yes
+      when: values_file.stdout.find("nginx") == -1
+
+    #Push to repo local modification for argocd to see and update app. Token is the only acceptable way with recent version.
+    - name: Push local modification
+      shell: git add . && git commit -m "push local changes" && git push https://<<token>>@github.com/<<github-username>>/<<repo-name>>.git --all
+      args:
+       chdir: /tmph/test/
+      become: yes
+      ignore_errors: yes
