@@ -2,8 +2,9 @@
 tasks:
   - init: echo 'init script' # runs during prebuild
     command: echo 'start script' 
+
   - name: install terraform
-    init: |
+    command: |
       brew tap hashicorp/tap
       install hashicorp/tap/terraform
 #    init: >
@@ -13,8 +14,6 @@ tasks:
 
 vscode:
   extensions:
-    - EditorConfig.EditorConfig
-    - golang.go
     - hashicorp.terraform
 
 # List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
