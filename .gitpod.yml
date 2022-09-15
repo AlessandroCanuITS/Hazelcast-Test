@@ -19,9 +19,9 @@ tasks:
 #      curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64
 #      sudo install minikube-linux-amd64 /usr/local/bin/minikube
 
-#vscode:
-#  extensions:
-#    - hashicorp.terraform
+vscode:
+  extensions:
+    - hashicorp.terraform
 
 # List the ports to expose. Learn more https://www.gitpod.io/docs/config-ports/
 ports:
